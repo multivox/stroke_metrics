@@ -37,11 +37,11 @@ int FindMax(unsigned char*, int, itk::Size<3U>);
 
 int main(int argc, char * argv[])
 {
-	if (argc < 11) // 11 necessary arguments
+	if (argc < 8) // 8 necessary arguments
 	{
 		std::cerr << "Usage: " << std::endl;
-		std::cerr << argv[0] << " -i head_cta.nii -m head_cta_segm.nii -l head_cta_segm.nii.gz.lbl" <<\
-								" --gaussSmoothing 3.5 --index min_index -o result.txt" << std::endl;
+		std::cerr << argv[0] << " -i head_cta.nii -m head_cta_segm.nii " <<\
+								" --gaussSmoothing 3.5 (--min_obj_code min_index) -o result.txt" << std::endl;
 		return EXIT_FAILURE;
 	}
 
@@ -70,7 +70,7 @@ int main(int argc, char * argv[])
 			sigmaValue = std::stod(argv[++i]);
 			continue;
 		}
-		else if(parameter == "--index"){
+		else if(parameter == "--min_obj_code"){
 			min_obj_code = std::stod(argv[++i]);
 			continue;
 		}
@@ -236,11 +236,12 @@ void QCS(const vector<vector<double>>& VP, ofstream& stream, unsigned char min_o
 
 int FindMax(unsigned char* pointer, int nthreads, itk::Size<3U> size) {
 	vector<int> max(nthreads, 0);
+	const int width = size[0], height = size[1], depth = size[2];
 #pragma omp parallel for 
-	for (int k = 1; k < size[2] - 1; ++k) {
-		for (int i = 1; i < size[0] - 1; ++i) {
-			for (int j = 1; j < size[1] - 1; ++j) {
-				auto obj_code = pointer + i + j * size[0] + k * size[2] * size[1];
+	for (int k = 0; k < depth; ++k) {
+		for (int i = 0; i < width; ++i) {
+			for (int j = 0; j < height; ++j) {
+				auto obj_code = pointer + i + j * width + k * width * height;
 				int thread = omp_get_thread_num();
 				if ((*obj_code) > max[thread]) max[thread] = (*obj_code);
 			}
